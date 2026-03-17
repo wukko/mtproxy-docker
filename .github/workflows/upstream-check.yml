@@ -1,0 +1,56 @@
+name: Check Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  actions: write
+  contents: read
+  packages: read
+
+jobs:
+  check-upstream-commit:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve upstream metadata
+        id: upstream
+        uses: ./.github/actions/resolve-upstream
+
+      - name: Check published image for latest upstream commit
+        id: image
+        run: |
+          set -euo pipefail
+
+          image="${IMAGE_NAME}:${{ steps.upstream.outputs.image_tag }}"
+
+          if docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "Image is up to date: $image"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Image is missing: $image"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger build workflow
+        if: steps.image.outputs.present == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-image.yml',
+              ref: context.ref.replace('refs/heads/', ''),
+            });
+
+      - name: Report triggered build
+        if: steps.image.outputs.present == 'false'
+        run: |
+          echo "Triggered docker-image.yml because the latest upstream image tag is missing."

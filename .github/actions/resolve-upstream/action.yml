@@ -1,0 +1,37 @@
+name: Resolve MTProxy Upstream
+description: Resolve the latest MTProxy upstream version and commit
+
+outputs:
+  version:
+    description: Latest upstream version string
+    value: ${{ steps.resolve.outputs.version }}
+  commit:
+    description: Latest upstream short commit hash
+    value: ${{ steps.resolve.outputs.commit }}
+  image_tag:
+    description: Published image tag for the latest upstream revision
+    value: ${{ steps.resolve.outputs.image_tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve upstream version and commit
+      id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        repo_dir="$(mktemp -d)"
+        trap 'rm -rf "$repo_dir"' EXIT
+
+        git clone --depth 1 --filter=blob:none https://github.com/TelegramMessenger/MTProxy.git "$repo_dir"
+
+        version="$(git -C "$repo_dir" describe --tags --always)"
+        commit="$(git -C "$repo_dir" rev-parse --short=12 HEAD)"
+        image_tag="upstream-${version//\//-}-${commit}"
+
+        {
+          echo "version=$version"
+          echo "commit=$commit"
+          echo "image_tag=$image_tag"
+        } >> "$GITHUB_OUTPUT"
