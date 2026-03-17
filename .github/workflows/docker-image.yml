@@ -47,15 +47,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Create release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.upstream.outputs.image_tag }}
-          name: MTProxy upstream ${{ steps.upstream.outputs.version }} (${{ steps.upstream.outputs.commit }})
-          draft: false
-          prerelease: true
-          body: |
-            Image tags published:
-            - ${{ env.IMAGE_NAME }}:latest
-            - ${{ env.IMAGE_NAME }}:${{ steps.upstream.outputs.image_tag }}
