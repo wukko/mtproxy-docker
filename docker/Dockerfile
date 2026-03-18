@@ -25,11 +25,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /src/objs/bin/mtproto-proxy /mtproto-proxy
-COPY env.sh /env.sh
-COPY secrets.sh /secrets.sh
-COPY entrypoint.sh /entrypoint.sh
-COPY tg-config-updater.sh /tg-config-updater.sh
-
-RUN chmod +x /env.sh /secrets.sh /entrypoint.sh /tg-config-updater.sh
+COPY --chmod=755 env.sh secrets.sh entrypoint.sh tg-config-updater.sh /
 
 ENTRYPOINT ["/entrypoint.sh"]
