@@ -4,6 +4,7 @@ set -euo pipefail
 
 . /env.sh
 declare -i PROXY_STARTUP_TIMEOUT_SECONDS=30
+declare -a NAT_INFO_ARGS=()
 
 die() {
   echo "$1" >&2
@@ -16,6 +17,29 @@ require_public_host() {
   if [[ -z "$MTPROXY_PUBLIC_HOST" ]]; then
     die "MTPROXY_PUBLIC_HOST is required"
   fi
+}
+
+detect_nat_private_ip() {
+  local detected_ips
+
+  detected_ips="$(hostname -i 2>/dev/null || true)"
+  printf '%s\n' "${detected_ips%% *}"
+}
+
+configure_nat_info() {
+  local private_ip
+
+  if [[ -z "$MTPROXY_NAT_PUBLIC_IP" ]]; then
+    return 0
+  fi
+
+  private_ip="$(detect_nat_private_ip)"
+
+  NAT_INFO_ARGS=(
+    --nat-info "$private_ip":"$MTPROXY_NAT_PUBLIC_IP"
+  )
+
+  echo "Using MTProxy NAT info: ${private_ip} -> ${MTPROXY_NAT_PUBLIC_IP}."
 }
 
 telegram_files_present() {
@@ -64,6 +88,10 @@ start_proxy() {
     args+=( -P "$MTPROXY_TAG" )
   fi
 
+  if [[ "${#NAT_INFO_ARGS[@]}" -gt 0 ]]; then
+    args+=( "${NAT_INFO_ARGS[@]}" )
+  fi
+
   /mtproto-proxy "${args[@]}" &
   proxy_pid="$!"
 }
@@ -108,6 +136,7 @@ wait_for_proxy() {
 
 require_public_host
 check_data_dir
+configure_nat_info
 
 if [[ "$MTPROXY_AUTO_UPDATE_TELEGRAM_FILES" == "1" ]]; then
   check_telegram_files

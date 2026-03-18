@@ -37,7 +37,7 @@ This guide assumes that you're performing the steps on a Linux machine.
     nano compose.yml
     ```
 
-4. Paste a basic config into `compose.yml`:
+4. Copy and paste this config into `compose.yml`:
     ```yml
     services:
       mtproxy:
@@ -52,6 +52,11 @@ This guide assumes that you're performing the steps on a Linux machine.
           # REQUIRED: your server's public IP/host
           MTPROXY_PUBLIC_HOST: "133.7.69.67"
     ```
+
+    Note: if you're using a hostname for `MTPROXY_PUBLIC_HOST` rather than
+    an IPv4 address, you need to set `MTPROXY_NAT_PUBLIC_IP` with your
+    server's IPv4 address.
+
     Additionally, set other [environment variables](#environment-variables).
 
 5. Start the Docker container:
@@ -112,6 +117,12 @@ one secret or multiple secrets separated by commas, spaces, or newlines.
 
 Note: `MTPROXY_SECRET` takes precedence over `MTPROXY_SECRET_FILE` if both are
 defined.
+
+#### `MTPROXY_NAT_PUBLIC_IP`
+Public IPv4 address to pass to `mtproto-proxy --nat-info`.
+
+Used when the container runs behind Docker bridge/NAT instead of
+`network_mode: host`.
 
 <!-- Links -->
 [tg-docker-outdated]: https://github.com/TelegramMessenger/MTProxy#:~:text=the%20image%20is%20outdated
