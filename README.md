@@ -134,3 +134,23 @@ using `network_mode: host`.
 
 <!-- Links -->
 [tg-docker-outdated]: https://github.com/TelegramMessenger/MTProxy#:~:text=the%20image%20is%20outdated
+
+## ⚠️ DPI bypass limitations
+
+This image uses the official C implementation of MTProxy, which supports `dd`-prefix secrets (random padding) only.
+
+In countries with advanced DPI systems (e.g. Russia's ТСПУ), random padding alone may not be sufficient — connections can still be detected and blocked.
+
+If you need fake-TLS support (`ee`-prefix secrets with domain fronting), consider using [nineseconds/mtg](https://github.com/9seconds/mtg) instead. Fake-TLS makes the proxy traffic look like regular HTTPS to a specified domain (e.g. `www.google.com`), which is significantly harder for DPI to detect and block.
+
+### Quick comparison
+
+| Feature | mtproto-proxy (this image) | mtg |
+|---------|---------------------------|-----|
+| Secret type | `dd` (random padding) | `ee` (fake-TLS) + `dd` |
+| Domain fronting | ❌ | ✅ |
+| DPI resistance | Low | High |
+| Anti-replay | ❌ | ✅ |
+| IP blocklist | ❌ | ✅ |
+| Doppelganger defense | ❌ | ✅ |
+| Language | C | Go |
